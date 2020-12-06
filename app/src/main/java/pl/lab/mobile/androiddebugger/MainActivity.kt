@@ -7,21 +7,25 @@ import android.content.ServiceConnection
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import pl.lab.mobile.androiddebugger.domain.service.DebuggerService
+import pl.lab.mobile.androiddebuggerlogger.ILogger
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 import pl.lab.mobile.androiddebuggerlogger.domain.LoggerBinder
 
 class MainActivity : AppCompatActivity(), LoggerBinder.Listener {
 
-    private var loggerBinder: LoggerBinder? = null
+    private var logger: LoggerBinder? = null
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            loggerBinder = service as? LoggerBinder
-            loggerBinder?.registerListener(this@MainActivity)
+            logger = ILogger.Stub.asInterface(service).asBinder() as? LoggerBinder
+            logger?.registerListener(this@MainActivity)
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
+            logger?.unregisterListener()
+            logger = null
         }
     }
 
@@ -34,14 +38,14 @@ class MainActivity : AppCompatActivity(), LoggerBinder.Listener {
     }
 
     override fun onLog(message: LogMessage) {
-
+        findViewById<TextView>(R.id.text_view).text = message.message + message.type
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        logger?.unregisterListener()
+        logger?.stop()
         unbindService(serviceConnection)
-        loggerBinder?.stop()
-        loggerBinder?.unregisterListener()
     }
 
     companion object {

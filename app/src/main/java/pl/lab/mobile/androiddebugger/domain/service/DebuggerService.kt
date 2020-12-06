@@ -11,11 +11,22 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import pl.lab.mobile.androiddebugger.MainActivity
 import pl.lab.mobile.androiddebugger.R
+import pl.lab.mobile.androiddebuggerlogger.ILogger
+import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 import pl.lab.mobile.androiddebuggerlogger.domain.LoggerBinder
 
 class DebuggerService : Service() {
 
-    private val loggerBinder = LoggerBinder(this)
+    private val iLogger = object : ILogger.Stub() {
+        private val binder = LoggerBinder(this@DebuggerService)
+
+        override fun asBinder(): IBinder = binder
+
+        override fun log(messageJson: MutableMap<String, String>?) {
+            val message = LogMessage.fromMap(messageJson) ?: return
+            binder.log(message)
+        }
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val channelId = "Android Debugger"
@@ -54,7 +65,7 @@ class DebuggerService : Service() {
         return START_NOT_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? = loggerBinder
+    override fun onBind(intent: Intent?): IBinder? = iLogger
 
     override fun onDestroy() {
         super.onDestroy()

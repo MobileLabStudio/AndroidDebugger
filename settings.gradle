@@ -1,3 +1,4 @@
+include ':androiddebuggersample'
 include ':Android Debugger Logger'
 include ':app'
 rootProject.name = "Android Debugger"
