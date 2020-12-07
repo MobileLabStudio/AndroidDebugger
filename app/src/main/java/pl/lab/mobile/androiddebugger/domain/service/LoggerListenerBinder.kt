@@ -1,10 +1,10 @@
-package pl.lab.mobile.androiddebuggerlogger.domain
+package pl.lab.mobile.androiddebugger.domain.service
 
 import android.app.Service
 import android.os.Binder
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 
-class LoggerBinder(private val service: Service) : Binder(), Logger {
+internal class LoggerListenerBinder(private val service: Service) : Binder(), LoggerListener {
 
     private var listener: Listener? = null
 

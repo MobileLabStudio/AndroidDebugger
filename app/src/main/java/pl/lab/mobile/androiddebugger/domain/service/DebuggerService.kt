@@ -13,12 +13,11 @@ import pl.lab.mobile.androiddebugger.MainActivity
 import pl.lab.mobile.androiddebugger.R
 import pl.lab.mobile.androiddebuggerlogger.ILogger
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
-import pl.lab.mobile.androiddebuggerlogger.domain.LoggerBinder
 
 class DebuggerService : Service() {
 
     private val iLogger = object : ILogger.Stub() {
-        private val binder = LoggerBinder(this@DebuggerService)
+        private val binder = LoggerListenerBinder(this@DebuggerService)
 
         override fun asBinder(): IBinder = binder
 

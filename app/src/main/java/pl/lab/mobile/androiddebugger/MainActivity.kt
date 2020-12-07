@@ -12,14 +12,14 @@ import androidx.core.content.ContextCompat
 import pl.lab.mobile.androiddebugger.domain.service.DebuggerService
 import pl.lab.mobile.androiddebuggerlogger.ILogger
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
-import pl.lab.mobile.androiddebuggerlogger.domain.LoggerBinder
+import pl.lab.mobile.androiddebugger.domain.service.LoggerListenerBinder
 
-class MainActivity : AppCompatActivity(), LoggerBinder.Listener {
+class MainActivity : AppCompatActivity(), LoggerListenerBinder.Listener {
 
-    private var logger: LoggerBinder? = null
+    private var logger: LoggerListenerBinder? = null
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            logger = ILogger.Stub.asInterface(service).asBinder() as? LoggerBinder
+            logger = ILogger.Stub.asInterface(service).asBinder() as? LoggerListenerBinder
             logger?.registerListener(this@MainActivity)
         }
 

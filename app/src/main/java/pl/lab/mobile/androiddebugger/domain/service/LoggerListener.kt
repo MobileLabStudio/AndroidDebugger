@@ -1,8 +1,8 @@
-package pl.lab.mobile.androiddebuggerlogger.domain
+package pl.lab.mobile.androiddebugger.domain.service
 
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 
-interface Logger {
+internal interface LoggerListener {
 
     fun log(message: LogMessage)
 }

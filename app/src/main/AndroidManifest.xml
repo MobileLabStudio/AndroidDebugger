@@ -26,7 +26,7 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="pl.lab.mobile.androiddebugger.StartDebugger" />
+                <action android:name="pl.lab.mobile.androiddebugger.bind" />
             </intent-filter>
         </service>
     </application>
