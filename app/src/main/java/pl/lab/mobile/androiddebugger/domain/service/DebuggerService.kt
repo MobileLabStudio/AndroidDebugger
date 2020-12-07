@@ -9,7 +9,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import pl.lab.mobile.androiddebugger.MainActivity
+import pl.lab.mobile.androiddebugger.presentation.MainActivity
 import pl.lab.mobile.androiddebugger.R
 import pl.lab.mobile.androiddebuggerlogger.ILogger
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage

@@ -7,4 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="log_info">#0288D1</color>
+    <color name="log_warning">#F57C00</color>
+    <color name="log_error">#D32F2F</color>
 </resources>
