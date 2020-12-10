@@ -6,7 +6,7 @@ import pl.lab.mobile.androiddebugger.domain.util.TimeUtil
 import pl.lab.mobile.androiddebugger.presentation.MessagesAdapter
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 
-internal class DebuggerServiceBinder(val service: DebuggerService) : Binder(), LoggerListener {
+internal class DebuggerServiceBinder(val service: DebuggerService) : Binder() {
 
     val messages = MutableLiveData<MutableList<MessagesAdapter.Message>>()
 
@@ -17,27 +17,8 @@ internal class DebuggerServiceBinder(val service: DebuggerService) : Binder(), L
             app = message.app,
             message = message.message
         )
-        this.messages.postValue(this.messages.value
+        messages.postValue(messages.value
             ?.also { it.add(adapterMessage) }
             ?: mutableListOf(adapterMessage))
-    }
-
-    var listener: Listener? = null
-        private set
-
-    fun registerListener(listener: Listener) {
-        this.listener = listener
-    }
-
-    fun unregisterListener() {
-        this.listener = null
-    }
-
-    override fun log(message: LogMessage) {
-        listener?.onLog(message)
-    }
-
-    interface Listener {
-        fun onLog(message: LogMessage)
     }
 }

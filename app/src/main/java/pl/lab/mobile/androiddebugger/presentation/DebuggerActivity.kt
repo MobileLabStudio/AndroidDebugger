@@ -15,104 +15,116 @@ import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 import pl.lab.mobile.androiddebugger.domain.service.DebuggerServiceBinder
 import pl.lab.mobile.androiddebuggerlogger.ILogger
 
-class DebuggerActivity : AppCompatActivity(), DebuggerServiceBinder.Listener {
+class DebuggerActivity : AppCompatActivity() {
 
-    private var isRunning = false
+    // UI
     private lateinit var binding: ActivityMainBinding
     private lateinit var messagesAdapter: MessagesAdapter
-    private lateinit var debuggerServiceBinder: DebuggerServiceBinder
-    private lateinit var debuggerStateBroadcastReceiver: BroadcastReceiver
-    private lateinit var serviceConnection: ServiceConnection
+
+    // Service
+    private var debuggerServiceBinder: DebuggerServiceBinder? = null
+    private var serviceConnection: ServiceConnection? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         messagesAdapter = MessagesAdapter()
         binding.messagesRecyclerView.apply {
-            layoutManager =
-                LinearLayoutManager(this@DebuggerActivity, RecyclerView.VERTICAL, false).apply {
-                    stackFromEnd = true
-                }
-            adapter = messagesAdapter
-            addItemDecoration(
-                DividerItemDecoration(
-                    this@DebuggerActivity,
-                    RecyclerView.VERTICAL
-                )
+            val linearLayoutManager = LinearLayoutManager(
+                this@DebuggerActivity,
+                RecyclerView.VERTICAL,
+                false
             )
+            linearLayoutManager.stackFromEnd = true
+            layoutManager = linearLayoutManager
+            adapter = messagesAdapter
+            val divider = DividerItemDecoration(this@DebuggerActivity, RecyclerView.VERTICAL)
+            addItemDecoration(divider)
         }
-
-        messagesAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
-            override fun onItemRangeChanged(positionStart: Int, itemCount: Int) {
-                super.onItemRangeChanged(positionStart, itemCount)
-                binding.messagesRecyclerView.scrollToPosition(0)
-            }
-        })
+        messagesAdapter.registerAdapterDataObserver(AdapterDataObserver())
 
         binding.startStopButton.setOnClickListener {
-            if (isRunning) {
-                unbindService(serviceConnection)
-                debuggerServiceBinder.service.stopSelf()
+            if (DebuggerService.isRunning.value == true) {
+                unbindService()
+                stopService()
             } else {
-                val intent = Intent(applicationContext, DebuggerService::class.java)
-                ContextCompat.startForegroundService(this, intent)
-                bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+                startService()
+                bindService()
             }
+        }
+
+        if (DebuggerService.isRunning.value == true) {
+            bindService()
+        }
+
+        DebuggerService.isRunning.observe(this) {
+            binding.startStopButton.setText(if (it) R.string.stop else R.string.start)
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        debuggerStateBroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent?) {
-                isRunning = intent?.takeIf { it.action == DEBUGGER_STATE_INTENT_ACTION }
-                    ?.extras
-                    ?.getBoolean(DebuggerService.ARG_DEBUGGER_STATE) == true
-                updateUi(isRunning)
-            }
-        }
-        registerReceiver(debuggerStateBroadcastReceiver, IntentFilter(DEBUGGER_STATE_INTENT_ACTION))
-        serviceConnection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-                debuggerServiceBinder = ILogger.Stub
-                    .asInterface(service)
-                    .asBinder() as DebuggerServiceBinder
-                debuggerServiceBinder.registerListener(this@DebuggerActivity)
-                debuggerServiceBinder.messages.observe(debuggerServiceBinder.service.lifecycleOwner) { messages ->
-                    messagesAdapter.submitList(messages)
-                    binding.messagesRecyclerView.scrollToPosition(messagesAdapter.itemCount - 1)
-                }
-            }
-
-            override fun onServiceDisconnected(p0: ComponentName?) {
-                // DO NOTHING
-            }
-        }
-        val intent = Intent(applicationContext, DebuggerService::class.java)
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+    override fun onDestroy() {
+        super.onDestroy()
+        unbindService()
     }
 
-    override fun onStop() {
-        super.onStop()
-        unregisterReceiver(debuggerStateBroadcastReceiver)
+    private fun unbindService() {
         try {
-            unbindService(serviceConnection)
+            val serviceConnection = this.serviceConnection
+            if (serviceConnection != null) {
+                unbindService(serviceConnection)
+                this.serviceConnection = null
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    override fun onLog(message: LogMessage) {
-        debuggerServiceBinder.addMessage(message)
+    private fun bindService() {
+        val serviceConnection = this.serviceConnection
+            ?: DebuggerServiceConnection().also { serviceConnection = it }
+        bindService(getServiceIntent(), serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
-    private fun updateUi(started: Boolean) {
-        binding.startStopButton.setText(if (started) R.string.stop else R.string.start)
+    private fun startService() {
+        ContextCompat.startForegroundService(applicationContext, getServiceIntent())
+    }
+
+    private fun stopService() {
+        debuggerServiceBinder?.service?.stopSelf()
+        debuggerServiceBinder = null
+    }
+
+    private fun getServiceIntent() = Intent(applicationContext, DebuggerService::class.java)
+
+    private inner class AdapterDataObserver : RecyclerView.AdapterDataObserver() {
+
+        override fun onItemRangeChanged(positionStart: Int, itemCount: Int) {
+            super.onItemRangeChanged(positionStart, itemCount)
+            binding.messagesRecyclerView.scrollToPosition(0)
+        }
+    }
+
+    private inner class DebuggerServiceConnection : ServiceConnection {
+
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val debuggerServiceBinder = ILogger.Stub
+                .asInterface(service)
+                .asBinder() as DebuggerServiceBinder
+            debuggerServiceBinder.messages.observe(this@DebuggerActivity) { messages ->
+                messagesAdapter.submitList(messages)
+                binding.messagesRecyclerView.scrollToPosition(messagesAdapter.itemCount - 1)
+            }
+            this@DebuggerActivity.debuggerServiceBinder = debuggerServiceBinder
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            // Do nothing
+        }
     }
 
     companion object {
         const val REQUEST_CODE = 1
-        const val DEBUGGER_STATE_INTENT_ACTION = "state"
     }
 }

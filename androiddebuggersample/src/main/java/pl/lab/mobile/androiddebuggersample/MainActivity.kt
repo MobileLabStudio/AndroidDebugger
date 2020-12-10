@@ -29,17 +29,14 @@ class MainActivity : AppCompatActivity() {
         binding.logSuccessButton.setOnClickListener {
             Logger.logSuccess(getLogMessage())
         }
+
+        Logger.start("Android Debugger Sample App", application)
     }
 
-    private fun getLogMessage() = binding.messageEditText.text?.toString() ?: ""
+    private fun getLogMessage() = binding.messageEditText.text.toString() ?: ""
 
-    override fun onStart() {
-        super.onStart()
-        Logger.start("Android Debugger Sample App", this)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Logger.stop(this)
+    override fun onDestroy() {
+        super.onDestroy()
+        Logger.stop(application)
     }
 }
