@@ -11,6 +11,7 @@ import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 object Logger {
 
     private var logger: ILogger? = null
+    private var app: String = ""
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             logger = ILogger.Stub.asInterface(service)
@@ -21,7 +22,8 @@ object Logger {
         }
     }
 
-    fun start(context: Context) {
+    fun start(app: String, context: Context) {
+        this.app = app
         val intent = Intent().apply {
             setPackage("pl.lab.mobile.androiddebugger")
             action = "pl.lab.mobile.androiddebugger.bind"
@@ -31,9 +33,26 @@ object Logger {
 
     fun stop(context: Context) {
         context.unbindService(serviceConnection)
+        logger = null
     }
 
     fun log(message: LogMessage) {
         logger?.log(message.toMap())
+    }
+
+    fun logInfo(message: String) {
+        logger?.log(LogMessage(LogMessage.Type.INFO, app, message).toMap())
+    }
+
+    fun logWarning(message: String) {
+        logger?.log(LogMessage(LogMessage.Type.WARNING, app, message).toMap())
+    }
+
+    fun logError(message: String) {
+        logger?.log(LogMessage(LogMessage.Type.ERROR, app, message).toMap())
+    }
+
+    fun logSuccess(message: String) {
+        logger?.log(LogMessage(LogMessage.Type.SUCCESS, app, message).toMap())
     }
 }

@@ -2,36 +2,40 @@ package pl.lab.mobile.androiddebuggersample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 import pl.lab.mobile.androiddebuggerlogger.domain.logger.Logger
+import pl.lab.mobile.androiddebuggersample.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        findViewById<Button>(R.id.log_message_button).setOnClickListener {
-            val content = findViewById<EditText>(R.id.message_edit_text)
-                .text
-                ?.toString()
-                ?: return@setOnClickListener
-            val message =
-                LogMessage(
-                    LogMessage.Type.INFO,
-                    "sample app",
-                    content,
-                    System.currentTimeMillis()
-                )
-            Logger.log(message)
+        binding.logInfoButton.setOnClickListener {
+            Logger.logInfo(getLogMessage())
+        }
+
+        binding.logWarningButton.setOnClickListener {
+            Logger.logWarning(getLogMessage())
+        }
+
+        binding.logErrorButton.setOnClickListener {
+            Logger.logError(getLogMessage())
+        }
+
+        binding.logSuccessButton.setOnClickListener {
+            Logger.logSuccess(getLogMessage())
         }
     }
 
+    private fun getLogMessage() = binding.messageEditText.text?.toString() ?: ""
+
     override fun onStart() {
         super.onStart()
-        Logger.start(this)
+        Logger.start("Android Debugger Sample App", this)
     }
 
     override fun onStop() {

@@ -3,23 +3,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_gravity="top"
     android:orientation="vertical"
-    android:padding="@dimen/padding_small">
+    android:paddingHorizontal="@dimen/padding_small"
+    android:paddingVertical="@dimen/padding_big">
 
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/timestamp_text_view"
-        style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        android:id="@+id/id_text_view"
+        style="@style/TextAppearance.MaterialComponents.Caption"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="07-12-2020 08:54" />
+        tools:text="07-12-2020 08:54"
+        tools:textColor="@color/white" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/message_text_view"
-        style="@style/TextAppearance.MaterialComponents.Body1"
+        style="@style/TextAppearance.MaterialComponents.Headline6"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/margin_normal"
-        tools:text="Log message" />
+        tools:text="Log message"
+        tools:textColor="@color/white" />
 
 
 </androidx.appcompat.widget.LinearLayoutCompat>

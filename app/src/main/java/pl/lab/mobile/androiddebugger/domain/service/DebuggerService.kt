@@ -9,15 +9,18 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import pl.lab.mobile.androiddebugger.presentation.MainActivity
+import androidx.lifecycle.*
+import pl.lab.mobile.androiddebugger.presentation.DebuggerActivity
 import pl.lab.mobile.androiddebugger.R
 import pl.lab.mobile.androiddebuggerlogger.ILogger
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 
 class DebuggerService : Service() {
 
+    private var started = false
+    val lifecycleOwner = ServiceLifecycleOwner()
     private val iLogger = object : ILogger.Stub() {
-        private val binder = LoggerListenerBinder(this@DebuggerService)
+        val binder = DebuggerServiceBinder(this@DebuggerService)
 
         override fun asBinder(): IBinder = binder
 
@@ -25,6 +28,11 @@ class DebuggerService : Service() {
             val message = LogMessage.fromMap(messageJson) ?: return
             binder.log(message)
         }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        lifecycleOwner.onCreate()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -40,16 +48,16 @@ class DebuggerService : Service() {
                 .createNotificationChannel(notificationChannel)
         }
 
-        val pendingIntent = Intent(applicationContext, MainActivity::class.java)
-            .run {
-                setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                PendingIntent.getActivity(
-                    applicationContext,
-                    MainActivity.REQUEST_CODE,
-                    this,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            }
+        val pendingIntent =
+            applicationContext.packageManager.getLaunchIntentForPackage("pl.lab.mobile.androiddebugger")
+                ?.run {
+                    PendingIntent.getActivity(
+                        applicationContext,
+                        DebuggerActivity.REQUEST_CODE,
+                        this,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                }
 
         val notification = NotificationCompat.Builder(this, channelId)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -61,17 +69,46 @@ class DebuggerService : Service() {
             .build()
 
         startForeground(NOTIFICATION_ID, notification)
-        return START_NOT_STICKY
+        started = true
+        sendState(true)
+        return START_REDELIVER_INTENT
     }
 
-    override fun onBind(intent: Intent?): IBinder? = iLogger
+    override fun onBind(intent: Intent?): IBinder {
+        sendState(started)
+        return iLogger
+    }
 
     override fun onDestroy() {
+        sendState(false)
+        lifecycleOwner.onDestroy()
         super.onDestroy()
-        stopForeground(true)
     }
 
-    private companion object {
-        const val NOTIFICATION_ID = 1
+    private fun sendState(started: Boolean) {
+        val intent = Intent(DebuggerActivity.DEBUGGER_STATE_INTENT_ACTION).apply {
+            putExtra(ARG_DEBUGGER_STATE, started)
+        }
+        sendBroadcast(intent)
+    }
+
+    inner class ServiceLifecycleOwner : LifecycleOwner {
+
+        private val registry = LifecycleRegistry(this)
+
+        override fun getLifecycle(): Lifecycle = registry
+
+        fun onCreate() {
+            registry.currentState = Lifecycle.State.STARTED
+        }
+
+        fun onDestroy() {
+            registry.currentState = Lifecycle.State.DESTROYED
+        }
+    }
+
+    companion object {
+        private const val NOTIFICATION_ID = 1
+        const val ARG_DEBUGGER_STATE = "debugger state"
     }
 }

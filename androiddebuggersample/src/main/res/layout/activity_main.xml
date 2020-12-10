@@ -1,20 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity">
+    android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/message_edit_text"
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/log_message_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Log" />
+        <EditText
+            android:id="@+id/message_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+        <Button
+            android:id="@+id/log_info_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Log Info" />
+
+        <Button
+            android:id="@+id/log_warning_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Log Warning" />
+
+        <Button
+            android:id="@+id/log_error_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Log Error" />
+
+        <Button
+            android:id="@+id/log_success_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Log Success" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</ScrollView>
