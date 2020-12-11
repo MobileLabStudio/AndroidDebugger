@@ -1,15 +1,15 @@
 package pl.lab.mobile.androiddebuggerlogger.domain.logger
 
 import android.app.Application
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
+import android.content.*
 import android.os.IBinder
+import android.util.Log
 import pl.lab.mobile.androiddebuggerlogger.ILogger
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 
 object Logger {
+
+    private const val ARG_DEBUGGER_RUNNING = "ARG_DEBUGGER_RUNNING"
 
     private var logger: ILogger? = null
     private var appName: String = ""
@@ -23,41 +23,75 @@ object Logger {
         }
     }
 
+    private val debuggerStateBroadcastReceiver = DebuggerStateBroadcastReceiver()
+
     fun start(appName: String, app: Application) {
         this.appName = appName
-        val intent = Intent().apply {
-            setPackage("pl.lab.mobile.androiddebugger")
-            action = "pl.lab.mobile.androiddebugger.bind"
-        }
-        val bind = app.applicationContext.bindService(
-            intent,
-            serviceConnection,
-            Context.BIND_ABOVE_CLIENT
-        )
+        val intentFilter = IntentFilter("pl.lab.mobile.androiddebuggerlogger.debuggerStateChanged")
+        app.registerReceiver(debuggerStateBroadcastReceiver, intentFilter)
     }
 
     fun stop(app: Application) {
-        app.unbindService(serviceConnection)
-        logger = null
+        app.unregisterReceiver(debuggerStateBroadcastReceiver)
     }
 
     fun log(message: LogMessage) {
-        logger?.log(message.toMap())
+        try {
+            logger?.log(message.toMap())
+        } catch (e: Exception) {
+            Log.d("logger", "cannot log", e)
+        }
     }
 
     fun logInfo(message: String) {
-        logger?.log(LogMessage(LogMessage.Type.INFO, appName, message).toMap())
+        log(LogMessage(LogMessage.Type.INFO, appName, message))
     }
 
     fun logWarning(message: String) {
-        logger?.log(LogMessage(LogMessage.Type.WARNING, appName, message).toMap())
+        log(LogMessage(LogMessage.Type.WARNING, appName, message))
     }
 
     fun logError(message: String) {
-        logger?.log(LogMessage(LogMessage.Type.ERROR, appName, message).toMap())
+        log(LogMessage(LogMessage.Type.ERROR, appName, message))
     }
 
     fun logSuccess(message: String) {
-        logger?.log(LogMessage(LogMessage.Type.SUCCESS, appName, message).toMap())
+        log(LogMessage(LogMessage.Type.SUCCESS, appName, message))
+    }
+
+    fun sendDebuggerState(context: Context, running: Boolean) {
+        val intent = Intent("pl.lab.mobile.androiddebuggerlogger.debuggerStateChanged")
+            .apply { putExtra(ARG_DEBUGGER_RUNNING, running) }
+        context.sendBroadcast(intent)
+    }
+
+    private class DebuggerStateBroadcastReceiver : BroadcastReceiver() {
+
+        override fun onReceive(context: Context, intent: Intent?) {
+            val extras = intent?.extras ?: return
+            val doesDebuggerRunning = extras.getBoolean(ARG_DEBUGGER_RUNNING, false)
+
+            val bindServiceIntent = Intent().apply {
+                setClassName(
+                    "pl.lab.mobile.androiddebugger",
+                    "pl.lab.mobile.androiddebugger.domain.service.DebuggerService"
+                )
+                action = "pl.lab.mobile.androiddebugger.bind"
+            }
+
+            if (doesDebuggerRunning) {
+                context.bindService(
+                    bindServiceIntent,
+                    serviceConnection,
+                    Context.BIND_ABOVE_CLIENT
+                )
+            } else {
+                try {
+                    context.unbindService(serviceConnection)
+                } catch (e: Exception) {
+                    Log.d("logger", "Cannot bind to service", e)
+                }
+            }
+        }
     }
 }

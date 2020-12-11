@@ -11,6 +11,7 @@ import pl.lab.mobile.androiddebugger.R
 import pl.lab.mobile.androiddebugger.domain.notification.AppNotification
 import pl.lab.mobile.androiddebuggerlogger.ILogger
 import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
+import pl.lab.mobile.androiddebuggerlogger.domain.logger.Logger
 
 class DebuggerService : Service() {
 
@@ -52,6 +53,7 @@ class DebuggerService : Service() {
 
         startForeground(NOTIFICATION_ID, notification)
         isRunningMutable.postValue(true)
+        Logger.sendDebuggerState(applicationContext, true)
         return START_NOT_STICKY
     }
 
@@ -62,6 +64,7 @@ class DebuggerService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isRunningMutable.postValue(false)
+        Logger.sendDebuggerState(applicationContext, false)
     }
 
     companion object {
