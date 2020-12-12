@@ -1,5 +1,7 @@
 package pl.lab.mobile.androiddebuggerlogger.data.model
 
+import org.json.JSONObject
+
 data class LogMessage constructor(
     val type: Type,
     val app: String,
@@ -7,13 +9,14 @@ data class LogMessage constructor(
     val time: Long = System.currentTimeMillis()
 ) {
 
-    fun toMap(): Map<String, String> {
-        return mapOf(
+    fun toJson(): String {
+        val map = mapOf(
             KEY_TYPE to type.name,
             KEY_APP to app,
             KEY_MESSAGE to message,
             KEY_TIME to time.toString()
         )
+        return JSONObject(map).toString()
     }
 
     companion object {
@@ -23,15 +26,16 @@ data class LogMessage constructor(
         private const val KEY_MESSAGE = "message"
         private const val KEY_TIME = "time"
 
-
-        fun fromMap(json: Map<String, String>?): LogMessage? {
-            if (json == null) {
+        fun fromJson(jsonRaw: String?): LogMessage? {
+            if (jsonRaw == null) {
                 return null
             }
-            val type = json[KEY_TYPE]?.runCatching(Type::valueOf)?.getOrNull() ?: return null
-            val appId = json[KEY_APP] ?: return null
-            val message = json[KEY_MESSAGE] ?: return null
-            val time = json[KEY_TIME]?.toLongOrNull() ?: return null
+            val json = JSONObject(jsonRaw)
+            val type =
+                json.getString(KEY_TYPE).runCatching(Type::valueOf).getOrNull() ?: return null
+            val appId = json.getString(KEY_APP) ?: return null
+            val message = json.getString(KEY_MESSAGE) ?: return null
+            val time = json.getLong(KEY_TIME)
             return LogMessage(type, appId, message, time)
         }
     }

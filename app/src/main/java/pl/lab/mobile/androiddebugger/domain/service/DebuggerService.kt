@@ -10,7 +10,6 @@ import pl.lab.mobile.androiddebugger.presentation.DebuggerActivity
 import pl.lab.mobile.androiddebugger.R
 import pl.lab.mobile.androiddebugger.domain.notification.AppNotification
 import pl.lab.mobile.androiddebuggerlogger.ILogger
-import pl.lab.mobile.androiddebuggerlogger.data.model.LogMessage
 import pl.lab.mobile.androiddebuggerlogger.domain.logger.Logger
 
 class DebuggerService : Service() {
@@ -20,9 +19,12 @@ class DebuggerService : Service() {
 
         override fun asBinder(): IBinder = binder
 
-        override fun log(messageJson: MutableMap<String, String>?) {
-            val message = LogMessage.fromMap(messageJson) ?: return
-            binder.addMessage(message)
+        override fun log(messageJson: String?) {
+            binder.addMessage(messageJson)
+        }
+
+        override fun logList(jsonMessages: MutableList<String>?) {
+            binder.addMessages(jsonMessages)
         }
     }
 
